@@ -6,8 +6,8 @@ export const pushExercises: Exercise[] = [
   { id: "push-2", name: "上斜哑铃卧推" },
   { id: "push-3", name: "杠铃肩推" },
   { id: "push-4", name: "侧平举" },
-  { id: "push-5", name: "绳索三头下压" },
-  { id: "push-6", name: "双杠臂屈伸" },
+  { id: "push-5", name: "哑铃弯举" },
+  { id: "push-6", name: "锤式弯举" },
 ];
 
 export const pullExercises: Exercise[] = [
@@ -15,8 +15,8 @@ export const pullExercises: Exercise[] = [
   { id: "pull-2", name: "杠铃划船" },
   { id: "pull-3", name: "高位下拉" },
   { id: "pull-4", name: "坐姿绳索划船" },
-  { id: "pull-5", name: "哑铃弯举" },
-  { id: "pull-6", name: "锤式弯举" },
+  { id: "pull-5", name: "绳索三头下压" },
+  { id: "pull-6", name: "双杠臂屈伸" },
 ];
 
 export const legsExercises: Exercise[] = [
