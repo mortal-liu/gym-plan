@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import type { SetRecord } from "../types";
-import { getExercises } from "../data/exercises";
-import { saveWorkout } from "../utils/storage";
+import type { SetRecord, Exercise } from "../types";
+import { getExercises, getDefaultExercises } from "../data/exercises";
+import { saveWorkout, saveCustomExercises } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
@@ -17,21 +17,31 @@ export default function WorkoutPage() {
   const navigate = useNavigate();
   const info = dayInfo[dayType ?? ""];
 
-  const exercises = getExercises(dayType ?? "");
-
+  const [exercises, setExercises] = useState<Exercise[]>(() => getExercises(dayType ?? ""));
   const [setsData, setSetsData] = useState<Record<string, SetRecord[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [isManaging, setIsManaging] = useState(false);
+
+  // 管理面板的临时状态
+  const [editList, setEditList] = useState<Exercise[]>([]);
+  const [newName, setNewName] = useState("");
 
   // 切换训练类型时重置所有状态
   useEffect(() => {
+    const list = getExercises(dayType ?? "");
+    setExercises(list);
+    resetSetsData(list);
+    setExpanded(new Set());
+    setIsManaging(false);
+  }, [dayType]);
+
+  function resetSetsData(list: Exercise[]) {
     const initial: Record<string, SetRecord[]> = {};
-    for (const ex of exercises) {
+    for (const ex of list) {
       initial[ex.id] = [{ weight: 0, reps: 0 }];
     }
     setSetsData(initial);
-    setExpanded(new Set());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dayType]);
+  }
 
   if (!info) {
     return (
@@ -82,7 +92,7 @@ export default function WorkoutPage() {
     const exerciseRecords = exercises
       .map((ex) => ({
         exerciseId: ex.id,
-        sets: setsData[ex.id].filter((s) => s.weight > 0 || s.reps > 0),
+        sets: setsData[ex.id]?.filter((s) => s.weight > 0 || s.reps > 0) ?? [],
       }))
       .filter((er) => er.sets.length > 0);
 
@@ -102,6 +112,114 @@ export default function WorkoutPage() {
     navigate("/history");
   }
 
+  /* 动作管理相关 */
+
+  function openManage() {
+    setEditList([...exercises]);
+    setNewName("");
+    setIsManaging(true);
+  }
+
+  function addExercise() {
+    const name = newName.trim();
+    if (!name) return;
+    if (editList.some((ex) => ex.name === name)) {
+      alert("该动作已存在");
+      return;
+    }
+    const newEx: Exercise = { id: Date.now().toString(), name };
+    setEditList([...editList, newEx]);
+    setNewName("");
+  }
+
+  function removeExercise(id: string) {
+    if (editList.length <= 1) {
+      alert("至少保留一个动作");
+      return;
+    }
+    setEditList(editList.filter((ex) => ex.id !== id));
+  }
+
+  function resetToDefault() {
+    setEditList(getDefaultExercises(dayType ?? ""));
+  }
+
+  function saveManage() {
+    saveCustomExercises(dayType ?? "", editList);
+    setExercises(editList);
+    resetSetsData(editList);
+    setIsManaging(false);
+  }
+
+  function cancelManage() {
+    setIsManaging(false);
+  }
+
+  /* 管理面板 */
+  if (isManaging) {
+    return (
+      <div className="min-h-screen flex flex-col px-5 py-8">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={cancelManage}
+            className="text-brand-500 text-[15px] font-medium hover:text-brand-600 transition-colors"
+          >
+            &larr; 返回
+          </button>
+          <h1 className="text-[22px] font-semibold text-gray-900 mx-auto">管理动作</h1>
+          <div className="w-10" />
+        </div>
+
+        <div className="flex flex-col gap-3 w-full max-w-sm mx-auto">
+          {editList.map((ex) => (
+            <Card key={ex.id} className="p-4 flex items-center justify-between">
+              <span className="text-[16px] font-medium text-gray-900">{ex.name}</span>
+              <button
+                onClick={() => removeExercise(ex.id)}
+                className="w-7 h-7 flex items-center justify-center text-gray-300
+                           hover:text-red-400 transition-colors text-lg shrink-0"
+              >
+                &times;
+              </button>
+            </Card>
+          ))}
+
+          {/* 添加新动作 */}
+          <Card className="p-4 flex gap-2 items-center">
+            <input
+              type="text"
+              placeholder="输入动作名称"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addExercise()}
+              className="flex-1 bg-brand-50 rounded-apple-xs px-3 py-2 text-sm text-gray-900
+                         outline-none focus:ring-2 focus:ring-brand-300 transition-shadow"
+            />
+            <Button onClick={addExercise} className="px-4 py-2 text-sm shrink-0">
+              添加
+            </Button>
+          </Card>
+
+          <button
+            onClick={resetToDefault}
+            className="text-gray-400 text-sm hover:text-gray-500 transition-colors"
+          >
+            重置为默认动作
+          </button>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-brand-50 to-transparent">
+          <div className="max-w-sm mx-auto">
+            <Button onClick={saveManage} className="w-full py-3 text-[16px]">
+              保存
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* 训练记录面板 */
   return (
     <div className="min-h-screen flex flex-col px-5 py-8 pb-24">
       {/* 顶部导航 */}
@@ -116,14 +234,19 @@ export default function WorkoutPage() {
         <h1 className="text-[22px] font-semibold text-gray-900 mx-auto">
           {info.emoji} {info.label}
         </h1>
-        <div className="w-10" />
+        <button
+          onClick={openManage}
+          className="text-gray-400 text-lg font-medium hover:text-gray-600 transition-colors w-10 text-right"
+        >
+          &#9881;
+        </button>
       </div>
 
       {/* 动作列表 */}
       <div className="flex flex-col gap-3 w-full max-w-sm mx-auto">
         {exercises.map((exercise) => {
           const isExpanded = expanded.has(exercise.id);
-          const sets = setsData[exercise.id];
+          const sets = setsData[exercise.id] ?? [];
 
           return (
             <Card key={exercise.id} className="p-4">

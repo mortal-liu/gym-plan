@@ -1,4 +1,5 @@
 import type { Exercise } from "../types";
+import { getCustomExercises } from "../utils/storage";
 
 export const pushExercises: Exercise[] = [
   { id: "push-1", name: "杠铃卧推" },
@@ -27,11 +28,18 @@ export const legsExercises: Exercise[] = [
   { id: "legs-6", name: "提踵" },
 ];
 
+const defaults: Record<string, Exercise[]> = {
+  push: pushExercises,
+  pull: pullExercises,
+  legs: legsExercises,
+};
+
 export function getExercises(dayType: string): Exercise[] {
-  switch (dayType) {
-    case "push": return pushExercises;
-    case "pull": return pullExercises;
-    case "legs": return legsExercises;
-    default: return [];
-  }
+  const custom = getCustomExercises(dayType);
+  if (custom.length > 0) return custom;
+  return defaults[dayType] ?? [];
+}
+
+export function getDefaultExercises(dayType: string): Exercise[] {
+  return defaults[dayType] ?? [];
 }
