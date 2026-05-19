@@ -208,7 +208,7 @@ export default function WorkoutPage() {
           </button>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-brand-50 to-transparent">
+        <div className="fixed bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-brand-50 to-transparent">
           <div className="max-w-sm mx-auto">
             <Button onClick={saveManage} className="w-full py-3 text-[16px]">
               保存
@@ -328,7 +328,7 @@ export default function WorkoutPage() {
       </div>
 
       {/* 底部保存按钮 */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-brand-50 to-transparent">
+      <div className="fixed bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-brand-50 to-transparent">
         <div className="max-w-sm mx-auto">
           <Button onClick={handleSave} className="w-full py-3 text-[16px]">
             保存训练记录
