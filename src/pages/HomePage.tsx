@@ -4,8 +4,8 @@ import Card from "../components/ui/Card";
 type DayType = "push" | "pull" | "legs";
 
 const days: { type: DayType; label: string; subtitle: string; emoji: string }[] = [
-  { type: "push", label: "推日", subtitle: "胸 · 肩 · 三头", emoji: "🏋️" },
-  { type: "pull", label: "拉日", subtitle: "背 · 二头", emoji: "💪" },
+  { type: "push", label: "推日", subtitle: "胸 · 肩 · 二头", emoji: "🏋️" },
+  { type: "pull", label: "拉日", subtitle: "背 · 三头", emoji: "💪" },
   { type: "legs", label: "蹲日", subtitle: "腿 · 臀", emoji: "🦵" },
 ];
 
@@ -38,13 +38,22 @@ export default function HomePage() {
         ))}
       </div>
 
-      <button
-        onClick={() => navigate("/history")}
-        className="mt-8 text-brand-500 text-[15px] font-medium
-                   hover:text-brand-600 transition-colors duration-200"
-      >
-        查看历史记录 &rarr;
-      </button>
+      <div className="flex gap-5 mt-8">
+        <button
+          onClick={() => navigate("/calendar")}
+          className="text-brand-500 text-[15px] font-medium
+                     hover:text-brand-600 transition-colors duration-200"
+        >
+          训练日历 &rarr;
+        </button>
+        <button
+          onClick={() => navigate("/history")}
+          className="text-brand-500 text-[15px] font-medium
+                     hover:text-brand-600 transition-colors duration-200"
+        >
+          历史记录 &rarr;
+        </button>
+      </div>
     </div>
   );
 }

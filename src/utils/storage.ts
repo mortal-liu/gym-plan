@@ -53,3 +53,27 @@ export function saveCustomExercises(dayType: string, exercises: Exercise[]): voi
   all[dayType] = exercises;
   localStorage.setItem(CUSTOM_EX_KEY, JSON.stringify(all));
 }
+
+/* 休息日管理 */
+
+const REST_DAYS_KEY = "gym-plan-rest-days";
+
+export function getRestDays(): string[] {
+  try {
+    const raw = localStorage.getItem(REST_DAYS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function toggleRestDay(date: string): void {
+  const days = getRestDays();
+  const idx = days.indexOf(date);
+  if (idx >= 0) {
+    days.splice(idx, 1);
+  } else {
+    days.push(date);
+  }
+  localStorage.setItem(REST_DAYS_KEY, JSON.stringify(days));
+}
