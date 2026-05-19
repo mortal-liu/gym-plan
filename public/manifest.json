@@ -1,0 +1,19 @@
+{
+  "name": "Gym Plan - 健身记录",
+  "short_name": "Gym Plan",
+  "description": "记录推/拉/蹲三类训练的组数、次数和重量",
+  "start_url": "/gym-plan/",
+  "scope": "/gym-plan/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f7f4",
+  "theme_color": "#f0f7f4",
+  "icons": [
+    {
+      "src": "/gym-plan/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
