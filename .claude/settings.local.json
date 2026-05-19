@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx tsc *)",
+      "Bash(kill %1)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(rm -rf node_modules/.vite)",
+      "Bash(npx vercel *)",
+      "WebFetch(domain:gym-plan-iota.vercel.app)"
+    ]
+  }
+}
