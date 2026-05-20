@@ -199,13 +199,19 @@ export default function WorkoutPage() {
     }
 
     clearDraft(dayType ?? "");
-    navigate("/history");
 
     if (isDoubleDay) {
       setModal({
         show: true, emoji: "🔥",
         message: "练完了！太强了bro，一天两练～记得好好吃饭好好睡觉，身体才能变强",
+        actions: [{
+          label: "好的",
+          onClick: () => navigate("/history"),
+          primary: true,
+        }],
       });
+    } else {
+      navigate("/history");
     }
   }
 
@@ -217,7 +223,11 @@ export default function WorkoutPage() {
     appendToTodayWorkout(exId, mins);
     setCardioModal(false);
     setCardioMinutes("");
-    navigate("/history");
+    setModal({
+      show: true, emoji: "🔥",
+      message: "有氧也补上了，一天两练太强了bro～好好休息，明天继续！",
+      actions: [{ label: "好的", onClick: () => navigate("/history"), primary: true }],
+    });
   }
 
   /* 动作管理 */

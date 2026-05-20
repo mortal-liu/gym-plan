@@ -140,7 +140,7 @@ export default function HistoryPage() {
                 {workout.exercises.map((er) => (
                   <div key={er.exerciseId} className="bg-brand-50 rounded-apple-xs p-3">
                     <p className="text-sm font-medium text-gray-900 mb-2">
-                      {exerciseMap.get(er.exerciseId) ?? "未知动作"}
+                      {exerciseMap.get(er.exerciseId) ?? (er.exerciseId.startsWith("cardio-") ? "有氧运动" : "未知动作")}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {er.sets.map((set, i) => (
@@ -148,7 +148,10 @@ export default function HistoryPage() {
                           key={i}
                           className="bg-white rounded-apple-xs px-2.5 py-1 text-xs text-gray-600"
                         >
-                          {set.weight}kg &times; {set.reps}
+                          {set.duration != null && set.duration > 0
+                            ? `${set.duration} 分钟`
+                            : `${set.weight ?? 0}kg × ${set.reps ?? 0}`
+                          }
                         </span>
                       ))}
                     </div>
