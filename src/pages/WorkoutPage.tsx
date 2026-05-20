@@ -19,7 +19,7 @@ export default function WorkoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const info = dayInfo[dayType ?? ""];
-  useSwipeBack();
+  const swipe = useSwipeBack();
 
   const editRecord = (location.state as { record?: WorkoutRecord })?.record ?? null;
 
@@ -126,7 +126,7 @@ export default function WorkoutPage() {
 
   if (!info) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-5">
+      <div className="min-h-screen flex flex-col items-center justify-center px-5" {...swipe}>
         <p className="text-gray-500">未知训练类型</p>
         <button onClick={() => navigate("/")} className="mt-4 text-brand-500 text-sm">
           &larr; 返回首页
@@ -298,7 +298,7 @@ export default function WorkoutPage() {
   /* 管理面板 */
   if (isManaging) {
     return (
-      <div className="min-h-screen flex flex-col px-5 py-8">
+      <div className="min-h-screen flex flex-col px-5 py-8" {...swipe}>
         <div className="flex items-center mb-6">
           <button onClick={cancelManage} className="text-brand-500 text-[15px] font-medium hover:text-brand-600 transition-colors">&larr; 返回</button>
           <h1 className="text-[22px] font-semibold text-gray-900 mx-auto">管理动作</h1>
@@ -360,7 +360,7 @@ export default function WorkoutPage() {
 
   /* 训练记录面板 */
   return (
-    <div className="min-h-screen flex flex-col px-5 py-8 pb-24">
+    <div className="min-h-screen flex flex-col px-5 py-8 pb-24" {...swipe}>
       <div className="flex items-center mb-6">
         <button onClick={() => navigate("/")} className="text-brand-500 text-[15px] font-medium hover:text-brand-600 transition-colors">&larr; 返回</button>
         <h1 className="text-[22px] font-semibold text-gray-900 mx-auto">

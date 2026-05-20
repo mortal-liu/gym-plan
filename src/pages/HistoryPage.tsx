@@ -23,7 +23,7 @@ const filters: { value: FilterType; label: string }[] = [
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  useSwipeBack();
+  const swipe = useSwipeBack();
   const [workouts, setWorkouts] = useState<WorkoutRecord[]>(() => getWorkouts());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -57,7 +57,7 @@ export default function HistoryPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col px-5 py-8 animate-fade-in">
+    <div className="min-h-screen flex flex-col px-5 py-8 animate-fade-in" {...swipe}>
       {/* 顶部导航 */}
       <div className="flex items-center mb-4">
         <button

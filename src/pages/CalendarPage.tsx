@@ -22,7 +22,7 @@ const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
 
 export default function CalendarPage() {
   const navigate = useNavigate();
-  useSwipeBack();
+  const swipe = useSwipeBack();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -82,7 +82,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col px-5 py-8 animate-fade-in">
+    <div className="min-h-screen flex flex-col px-5 py-8 animate-fade-in" {...swipe}>
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate("/")}
