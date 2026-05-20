@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { SetRecord, Exercise, WorkoutRecord } from "../types";
 import { getExercises, getDefaultExercises } from "../data/exercises";
-import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft, getWorkouts } from "../utils/storage";
+import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft, getWorkouts, toggleRestDay } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
@@ -55,7 +55,10 @@ export default function WorkoutPage() {
   const [isManaging, setIsManaging] = useState(false);
 
   // 自定义弹窗
-  const [modal, setModal] = useState<{ show: boolean; emoji: string; message: string }>({
+  const [modal, setModal] = useState<{
+    show: boolean; emoji: string; message: string;
+    actions?: { label: string; onClick: () => void; primary?: boolean }[];
+  }>({
     show: false, emoji: "", message: "",
   });
 
@@ -99,8 +102,27 @@ export default function WorkoutPage() {
       if (todayWorkouts.length > 0) {
         setModal({
           show: true,
-          emoji: "💪",
-          message: "今天已经练过一次了，状态好当然可以继续～但记住，休息才是进步的源泉哦",
+          emoji: "💭",
+          message: "今天已经练过一次了～想怎么安排？",
+          actions: [
+            {
+              label: "休息",
+              onClick: () => {
+                toggleRestDay(todayStr);
+                setModal((m) => ({ ...m, show: false }));
+                navigate("/");
+              },
+            },
+            {
+              label: "主动恢复",
+              onClick: () => setModal((m) => ({ ...m, show: false })),
+            },
+            {
+              label: "加练",
+              onClick: () => setModal((m) => ({ ...m, show: false })),
+              primary: true,
+            },
+          ],
         });
       }
     }
@@ -355,7 +377,7 @@ export default function WorkoutPage() {
             </Button>
           </div>
         </div>
-        <Modal open={modal.show} onClose={() => setModal((m) => ({ ...m, show: false }))}>
+        <Modal open={modal.show} onClose={() => setModal((m) => ({ ...m, show: false }))} actions={modal.actions}>
           <span className="text-[40px]">{modal.emoji}</span>
           <p className="text-[15px] text-gray-700 mt-3 leading-relaxed">{modal.message}</p>
         </Modal>
@@ -473,7 +495,7 @@ export default function WorkoutPage() {
           </Button>
         </div>
       </div>
-      <Modal open={modal.show} onClose={() => setModal((m) => ({ ...m, show: false }))}>
+      <Modal open={modal.show} onClose={() => setModal((m) => ({ ...m, show: false }))} actions={modal.actions}>
         <span className="text-[40px]">{modal.emoji}</span>
         <p className="text-[15px] text-gray-700 mt-3 leading-relaxed">{modal.message}</p>
       </Modal>
