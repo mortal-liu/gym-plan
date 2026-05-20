@@ -5,6 +5,7 @@ import { getExercises, getDefaultExercises } from "../data/exercises";
 import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft, getWorkouts } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
 
 const dayInfo: Record<string, { label: string; emoji: string }> = {
   push: { label: "推日", emoji: "🏋️" },
@@ -53,6 +54,11 @@ export default function WorkoutPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [isManaging, setIsManaging] = useState(false);
 
+  // 自定义弹窗
+  const [modal, setModal] = useState<{ show: boolean; emoji: string; message: string }>({
+    show: false, emoji: "", message: "",
+  });
+
   // 管理面板状态
   const [editList, setEditList] = useState<Exercise[]>([]);
   const [newName, setNewName] = useState("");
@@ -91,14 +97,11 @@ export default function WorkoutPage() {
       const todayStr = new Date().toISOString().slice(0, 10);
       const todayWorkouts = getWorkouts().filter((w) => w.date === todayStr);
       if (todayWorkouts.length > 0) {
-        const types = todayWorkouts.map((w) => {
-          if (w.dayType === "push") return "推日";
-          if (w.dayType === "pull") return "拉日";
-          return "蹲日";
-        }).join("、");
-        alert(
-          `Bro～ 今天已经练过 ${types} 了哦\n\n状态好的话可以加练，但记得听身体的话，该休息就休息～`
-        );
+        setModal({
+          show: true,
+          emoji: "💪",
+          message: "今天已经练过一次了，状态好当然可以继续～但记住，休息才是进步的源泉哦",
+        });
       }
     }
   }, [dayType]);
@@ -190,11 +193,11 @@ export default function WorkoutPage() {
     navigate("/history");
 
     if (isDoubleDay) {
-      setTimeout(() => {
-        alert(
-          "练完了！太强了bro，一天两练 🔥\n\n记得好好吃饭好好睡觉，身体才能变强～"
-        );
-      }, 400);
+      setModal({
+        show: true,
+        emoji: "🔥",
+        message: "练完了！太强了bro，一天两练～记得好好吃饭好好睡觉，身体才能变强",
+      });
     }
   }
 
@@ -352,6 +355,10 @@ export default function WorkoutPage() {
             </Button>
           </div>
         </div>
+        <Modal open={modal.show} onClose={() => setModal((m) => ({ ...m, show: false }))}>
+          <span className="text-[40px]">{modal.emoji}</span>
+          <p className="text-[15px] text-gray-700 mt-3 leading-relaxed">{modal.message}</p>
+        </Modal>
       </div>
     );
   }
@@ -466,6 +473,10 @@ export default function WorkoutPage() {
           </Button>
         </div>
       </div>
+      <Modal open={modal.show} onClose={() => setModal((m) => ({ ...m, show: false }))}>
+        <span className="text-[40px]">{modal.emoji}</span>
+        <p className="text-[15px] text-gray-700 mt-3 leading-relaxed">{modal.message}</p>
+      </Modal>
     </div>
   );
 }
