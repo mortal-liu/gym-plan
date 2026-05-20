@@ -85,6 +85,22 @@ export default function WorkoutPage() {
     }
     setExpanded(new Set());
     setIsManaging(false);
+
+    // 今天已有训练记录时，温柔提醒一下
+    if (!editRecord) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayWorkouts = getWorkouts().filter((w) => w.date === todayStr);
+      if (todayWorkouts.length > 0) {
+        const types = todayWorkouts.map((w) => {
+          if (w.dayType === "push") return "推日";
+          if (w.dayType === "pull") return "拉日";
+          return "蹲日";
+        }).join("、");
+        alert(
+          `Bro～ 今天已经练过 ${types} 了哦\n\n状态好的话可以加练，但记得听身体的话，该休息就休息～`
+        );
+      }
+    }
   }, [dayType]);
 
   if (!info) {
@@ -150,19 +166,10 @@ export default function WorkoutPage() {
     const today = new Date().toISOString().slice(0, 10);
 
     // 检查今天是否已有训练记录
+    let isDoubleDay = false;
     if (!editRecord) {
       const todayWorkouts = getWorkouts().filter((w) => w.date === today);
-      if (todayWorkouts.length > 0) {
-        const types = todayWorkouts.map((w) => {
-          if (w.dayType === "push") return "推日";
-          if (w.dayType === "pull") return "拉日";
-          return "蹲日";
-        }).join("、");
-        const ok = confirm(
-          `你今天已经练过 ${types} 了！\n\n一天两练可能影响恢复，确定要继续保存吗？`
-        );
-        if (!ok) return;
-      }
+      isDoubleDay = todayWorkouts.length > 0;
     }
 
     if (editRecord) {
@@ -181,6 +188,14 @@ export default function WorkoutPage() {
 
     clearDraft(dayType ?? "");
     navigate("/history");
+
+    if (isDoubleDay) {
+      setTimeout(() => {
+        alert(
+          "练完了！太强了bro，一天两练 🔥\n\n记得好好吃饭好好睡觉，身体才能变强～"
+        );
+      }, 400);
+    }
   }
 
   /* 动作管理 */
