@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { WorkoutRecord } from "../types";
 import { getWorkouts, deleteWorkout } from "../utils/storage";
+import { useSwipeBack } from "../utils/useSwipeBack";
 import { getExercises } from "../data/exercises";
 import Card from "../components/ui/Card";
 
@@ -22,6 +23,7 @@ const filters: { value: FilterType; label: string }[] = [
 
 export default function HistoryPage() {
   const navigate = useNavigate();
+  useSwipeBack();
   const [workouts, setWorkouts] = useState<WorkoutRecord[]>(() => getWorkouts());
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");

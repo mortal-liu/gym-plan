@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { SetRecord, Exercise, WorkoutRecord, ExerciseMode } from "../types";
 import { getExercises, getDefaultExercises } from "../data/exercises";
 import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft, getWorkouts, toggleRestDay, appendToTodayWorkout } from "../utils/storage";
+import { useSwipeBack } from "../utils/useSwipeBack";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
@@ -18,6 +19,7 @@ export default function WorkoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const info = dayInfo[dayType ?? ""];
+  useSwipeBack();
 
   const editRecord = (location.state as { record?: WorkoutRecord })?.record ?? null;
 

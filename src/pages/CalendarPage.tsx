@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getWorkouts, toggleRestDay, getRestDays } from "../utils/storage";
+import { useSwipeBack } from "../utils/useSwipeBack";
 import Card from "../components/ui/Card";
 
 const dayTypeColors: Record<string, string> = {
@@ -21,6 +22,7 @@ const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
 
 export default function CalendarPage() {
   const navigate = useNavigate();
+  useSwipeBack();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
