@@ -28,13 +28,17 @@ export default function CalendarPage() {
   const workouts = getWorkouts();
   const restDays = getRestDays();
 
-  const dateMap: Record<string, string> = {};
+  // 同一日期可能有多种训练类型
+  const dateMap: Record<string, string[]> = {};
   for (const w of workouts) {
-    dateMap[w.date] = w.dayType;
+    if (!dateMap[w.date]) dateMap[w.date] = [];
+    if (!dateMap[w.date].includes(w.dayType)) {
+      dateMap[w.date].push(w.dayType);
+    }
   }
   for (const d of restDays) {
     if (!dateMap[d]) {
-      dateMap[d] = "rest";
+      dateMap[d] = ["rest"];
     }
   }
 
@@ -42,15 +46,15 @@ export default function CalendarPage() {
   let startDow = new Date(year, month, 0).getDay();
   startDow = startDow === 0 ? 6 : startDow - 1;
 
-  const cells: { day: number; date: string; type: string | null }[] = [];
+  const cells: { day: number; date: string; types: string[] }[] = [];
 
   for (let i = 0; i < startDow; i++) {
-    cells.push({ day: 0, date: "", type: null });
+    cells.push({ day: 0, date: "", types: [] });
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    cells.push({ day: d, date: dateStr, type: dateMap[dateStr] ?? null });
+    cells.push({ day: d, date: dateStr, types: dateMap[dateStr] ?? [] });
   }
 
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -65,8 +69,8 @@ export default function CalendarPage() {
     else { setMonth(month + 1); }
   }
 
-  function handleDayClick(date: string, type: string | null) {
-    if (type && type !== "rest") {
+  function handleDayClick(date: string, types: string[]) {
+    if (types.length > 0 && !types.includes("rest")) {
       navigate("/history");
     } else if (date <= todayStr) {
       toggleRestDay(date);
@@ -115,21 +119,28 @@ export default function CalendarPage() {
           {cells.map((cell, i) => (
             <button
               key={i}
-              onClick={() => cell.day > 0 && handleDayClick(cell.date, cell.type)}
+              onClick={() => cell.day > 0 && handleDayClick(cell.date, cell.types)}
               className={`aspect-square flex flex-col items-center justify-center rounded-apple-xs
                 text-sm font-medium transition-all duration-150
                 ${cell.day === 0 ? "invisible" : ""}
                 ${cell.date === todayStr ? "ring-2 ring-brand-300" : ""}
-                ${cell.type ? "hover:opacity-80" : "hover:bg-brand-50"}
+                ${cell.types.length > 0 ? "hover:opacity-80" : "hover:bg-brand-50"}
               `}
             >
-              <span className={cell.type ? "text-gray-700" : "text-gray-400"}>
+              <span className={cell.types.length > 0 ? "text-gray-700" : "text-gray-400"}>
                 {cell.day}
               </span>
-              {cell.type && (
-                <span className={`text-[10px] text-white px-1.5 py-[1px] rounded-full mt-0.5 ${dayTypeColors[cell.type]}`}>
-                  {dayTypeLabels[cell.type]}
-                </span>
+              {cell.types.length > 0 && (
+                <div className="flex gap-0.5 mt-0.5">
+                  {cell.types.map((t) => (
+                    <span
+                      key={t}
+                      className={`text-[10px] text-white px-1.5 py-[1px] rounded-full ${dayTypeColors[t]}`}
+                    >
+                      {dayTypeLabels[t]}
+                    </span>
+                  ))}
+                </div>
               )}
             </button>
           ))}

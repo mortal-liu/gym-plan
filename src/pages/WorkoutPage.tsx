@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { SetRecord, Exercise, WorkoutRecord } from "../types";
 import { getExercises, getDefaultExercises } from "../data/exercises";
-import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft } from "../utils/storage";
+import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft, getWorkouts } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
@@ -149,14 +149,28 @@ export default function WorkoutPage() {
 
     const today = new Date().toISOString().slice(0, 10);
 
+    // 检查今天是否已有训练记录
+    if (!editRecord) {
+      const todayWorkouts = getWorkouts().filter((w) => w.date === today);
+      if (todayWorkouts.length > 0) {
+        const types = todayWorkouts.map((w) => {
+          if (w.dayType === "push") return "推日";
+          if (w.dayType === "pull") return "拉日";
+          return "蹲日";
+        }).join("、");
+        const ok = confirm(
+          `你今天已经练过 ${types} 了！\n\n一天两练可能影响恢复，确定要继续保存吗？`
+        );
+        if (!ok) return;
+      }
+    }
+
     if (editRecord) {
-      // 更新已有记录
       updateWorkout(editRecord.id, {
         ...editRecord,
         exercises: exerciseRecords,
       });
     } else {
-      // 新建记录
       saveWorkout({
         id: Date.now().toString(),
         dayType: dayType as "push" | "pull" | "legs",
