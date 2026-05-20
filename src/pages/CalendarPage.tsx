@@ -24,6 +24,7 @@ export default function CalendarPage() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
+  const [, setTick] = useState(0);
 
   const workouts = getWorkouts();
   const restDays = getRestDays();
@@ -74,7 +75,7 @@ export default function CalendarPage() {
       navigate("/history");
     } else if (date <= todayStr) {
       toggleRestDay(date);
-      navigate(0);
+      setTick((t) => t + 1);
     }
   }
 

@@ -106,6 +106,10 @@ export default function WorkoutPage() {
     }
   }, [dayType]);
 
+  function showAlert(message: string) {
+    setModal({ show: true, emoji: "", message });
+  }
+
   function initSets(list: Exercise[]): Record<string, SetRecord[]> {
     const initial: Record<string, SetRecord[]> = {};
     for (const ex of list) {
@@ -177,7 +181,7 @@ export default function WorkoutPage() {
       .filter((er) => er.sets.length > 0);
 
     if (exerciseRecords.length === 0) {
-      alert("请至少记录一组训练数据");
+      showAlert("请至少记录一组训练数据");
       return;
     }
 
@@ -244,7 +248,7 @@ export default function WorkoutPage() {
     const name = newName.trim();
     if (!name) return;
     if (editList.some((ex) => ex.name === name)) {
-      alert("该动作已存在");
+      showAlert("该动作已存在");
       return;
     }
     setEditList([...editList, { id: Date.now().toString(), name, mode: newMode }]);
@@ -252,7 +256,7 @@ export default function WorkoutPage() {
   }
 
   function removeExercise(id: string) {
-    if (editList.length <= 1) { alert("至少保留一个动作"); return; }
+    if (editList.length <= 1) { showAlert("至少保留一个动作"); return; }
     setEditList(editList.filter((ex) => ex.id !== id));
   }
 
