@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import type { SetRecord, Exercise } from "../types";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import type { SetRecord, Exercise, WorkoutRecord } from "../types";
 import { getExercises, getDefaultExercises } from "../data/exercises";
-import { saveWorkout, saveCustomExercises } from "../utils/storage";
+import { saveWorkout, updateWorkout, saveCustomExercises, saveDraft, getDraft, clearDraft } from "../utils/storage";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 
@@ -15,33 +15,77 @@ const dayInfo: Record<string, { label: string; emoji: string }> = {
 export default function WorkoutPage() {
   const { dayType } = useParams<{ dayType: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const info = dayInfo[dayType ?? ""];
 
-  const [exercises, setExercises] = useState<Exercise[]>(() => getExercises(dayType ?? ""));
-  const [setsData, setSetsData] = useState<Record<string, SetRecord[]>>({});
+  // 如果传入已存在的记录(编辑模式)
+  const editRecord = (location.state as { record?: WorkoutRecord })?.record ?? null;
+
+  const [exercises, setExercises] = useState<Exercise[]>(() => {
+    if (editRecord) {
+      // 编辑模式下，从记录中恢复动作列表
+      const list = getExercises(dayType ?? "");
+      return list;
+    }
+    return getExercises(dayType ?? "");
+  });
+
+  const [setsData, setSetsData] = useState<Record<string, SetRecord[]>>(() => {
+    // 优先恢复编辑模式的旧数据
+    if (editRecord) {
+      const data: Record<string, SetRecord[]> = {};
+      for (const er of editRecord.exercises) {
+        data[er.exerciseId] = er.sets;
+      }
+      return data;
+    }
+    // 其次恢复草稿
+    const draft = getDraft(dayType ?? "");
+    if (draft) return draft;
+    // 否则初始化为空
+    const initial: Record<string, SetRecord[]> = {};
+    for (const ex of getExercises(dayType ?? "")) {
+      initial[ex.id] = [{ weight: 0, reps: 0 }];
+    }
+    return initial;
+  });
+
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [isManaging, setIsManaging] = useState(false);
 
-  // 管理面板的临时状态
+  // 管理面板状态
   const [editList, setEditList] = useState<Exercise[]>([]);
   const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
-  // 切换训练类型时重置所有状态
+  // 草稿自动保存（防抖）
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const saveDraftDebounced = useCallback((data: Record<string, SetRecord[]>) => {
+    clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      saveDraft(dayType ?? "", data);
+    }, 800);
+  }, [dayType]);
+
+  // 切换训练类型时重置
   useEffect(() => {
+    if (editRecord) return; // 编辑模式不重置
     const list = getExercises(dayType ?? "");
     setExercises(list);
-    resetSetsData(list);
+    const draft = getDraft(dayType ?? "");
+    if (draft) {
+      setSetsData(draft);
+    } else {
+      const initial: Record<string, SetRecord[]> = {};
+      for (const ex of list) {
+        initial[ex.id] = [{ weight: 0, reps: 0 }];
+      }
+      setSetsData(initial);
+    }
     setExpanded(new Set());
     setIsManaging(false);
   }, [dayType]);
-
-  function resetSetsData(list: Exercise[]) {
-    const initial: Record<string, SetRecord[]> = {};
-    for (const ex of list) {
-      initial[ex.id] = [{ weight: 0, reps: 0 }];
-    }
-    setSetsData(initial);
-  }
 
   if (!info) {
     return (
@@ -58,32 +102,34 @@ export default function WorkoutPage() {
     setSetsData((prev) => {
       const sets = [...prev[exerciseId]];
       sets[setIndex] = { ...sets[setIndex], [field]: value };
-      return { ...prev, [exerciseId]: sets };
+      const next = { ...prev, [exerciseId]: sets };
+      saveDraftDebounced(next);
+      return next;
     });
   }
 
   function addSet(exerciseId: string) {
-    setSetsData((prev) => ({
-      ...prev,
-      [exerciseId]: [...prev[exerciseId], { weight: 0, reps: 0 }],
-    }));
+    setSetsData((prev) => {
+      const next = { ...prev, [exerciseId]: [...prev[exerciseId], { weight: 0, reps: 0 }] };
+      saveDraftDebounced(next);
+      return next;
+    });
   }
 
   function removeSet(exerciseId: string, setIndex: number) {
     setSetsData((prev) => {
       const sets = prev[exerciseId].filter((_, i) => i !== setIndex);
-      return { ...prev, [exerciseId]: sets.length > 0 ? sets : [{ weight: 0, reps: 0 }] };
+      const next = { ...prev, [exerciseId]: sets.length > 0 ? sets : [{ weight: 0, reps: 0 }] };
+      saveDraftDebounced(next);
+      return next;
     });
   }
 
   function toggleExpand(exerciseId: string) {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(exerciseId)) {
-        next.delete(exerciseId);
-      } else {
-        next.add(exerciseId);
-      }
+      if (next.has(exerciseId)) next.delete(exerciseId);
+      else next.add(exerciseId);
       return next;
     });
   }
@@ -102,21 +148,33 @@ export default function WorkoutPage() {
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    saveWorkout({
-      id: Date.now().toString(),
-      dayType: dayType as "push" | "pull" | "legs",
-      date: today,
-      exercises: exerciseRecords,
-    });
 
+    if (editRecord) {
+      // 更新已有记录
+      updateWorkout(editRecord.id, {
+        ...editRecord,
+        exercises: exerciseRecords,
+      });
+    } else {
+      // 新建记录
+      saveWorkout({
+        id: Date.now().toString(),
+        dayType: dayType as "push" | "pull" | "legs",
+        date: today,
+        exercises: exerciseRecords,
+      });
+    }
+
+    clearDraft(dayType ?? "");
     navigate("/history");
   }
 
-  /* 动作管理相关 */
+  /* 动作管理 */
 
   function openManage() {
     setEditList([...exercises]);
     setNewName("");
+    setEditingId(null);
     setIsManaging(true);
   }
 
@@ -127,8 +185,7 @@ export default function WorkoutPage() {
       alert("该动作已存在");
       return;
     }
-    const newEx: Exercise = { id: Date.now().toString(), name };
-    setEditList([...editList, newEx]);
+    setEditList([...editList, { id: Date.now().toString(), name }]);
     setNewName("");
   }
 
@@ -140,14 +197,37 @@ export default function WorkoutPage() {
     setEditList(editList.filter((ex) => ex.id !== id));
   }
 
+  function startRename(ex: Exercise) {
+    setEditingId(ex.id);
+    setRenameValue(ex.name);
+  }
+
+  function confirmRename() {
+    if (!editingId) return;
+    const name = renameValue.trim();
+    if (!name) return;
+    setEditList(editList.map((ex) => (ex.id === editingId ? { ...ex, name } : ex)));
+    setEditingId(null);
+  }
+
   function resetToDefault() {
     setEditList(getDefaultExercises(dayType ?? ""));
   }
 
   function saveManage() {
     saveCustomExercises(dayType ?? "", editList);
+
+    // 合并新旧动作：保留现有记录，新增动作给空组
+    setSetsData((prev) => {
+      const next: Record<string, SetRecord[]> = {};
+      for (const ex of editList) {
+        next[ex.id] = prev[ex.id] ?? [{ weight: 0, reps: 0 }];
+      }
+      saveDraftDebounced(next);
+      return next;
+    });
+
     setExercises(editList);
-    resetSetsData(editList);
     setIsManaging(false);
   }
 
@@ -172,19 +252,47 @@ export default function WorkoutPage() {
 
         <div className="flex flex-col gap-3 w-full max-w-sm mx-auto">
           {editList.map((ex) => (
-            <Card key={ex.id} className="p-4 flex items-center justify-between">
-              <span className="text-[16px] font-medium text-gray-900">{ex.name}</span>
-              <button
-                onClick={() => removeExercise(ex.id)}
-                className="w-7 h-7 flex items-center justify-center text-gray-300
-                           hover:text-red-400 transition-colors text-lg shrink-0"
-              >
-                &times;
-              </button>
+            <Card key={ex.id} className="p-4 flex items-center gap-2">
+              {editingId === ex.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && confirmRename()}
+                    onBlur={confirmRename}
+                    autoFocus
+                    className="flex-1 bg-brand-50 rounded-apple-xs px-3 py-2 text-sm text-gray-900
+                               outline-none focus:ring-2 focus:ring-brand-300"
+                  />
+                  <button
+                    onClick={confirmRename}
+                    className="text-brand-500 text-xs font-medium shrink-0 px-2"
+                  >
+                    确定
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => startRename(ex)}
+                    className="flex-1 text-left text-[16px] font-medium text-gray-900
+                               hover:text-brand-500 transition-colors"
+                  >
+                    {ex.name}
+                  </button>
+                  <button
+                    onClick={() => removeExercise(ex.id)}
+                    className="w-7 h-7 flex items-center justify-center text-gray-300
+                               hover:text-red-400 transition-colors text-lg shrink-0"
+                  >
+                    &times;
+                  </button>
+                </>
+              )}
             </Card>
           ))}
 
-          {/* 添加新动作 */}
           <Card className="p-4 flex gap-2 items-center">
             <input
               type="text"
@@ -222,17 +330,16 @@ export default function WorkoutPage() {
   /* 训练记录面板 */
   return (
     <div className="min-h-screen flex flex-col px-5 py-8 pb-24">
-      {/* 顶部导航 */}
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate("/")}
-          className="text-brand-500 text-[15px] font-medium
-                     hover:text-brand-600 transition-colors"
+          className="text-brand-500 text-[15px] font-medium hover:text-brand-600 transition-colors"
         >
           &larr; 返回
         </button>
         <h1 className="text-[22px] font-semibold text-gray-900 mx-auto">
           {info.emoji} {info.label}
+          {editRecord && <span className="text-sm text-gray-400 ml-2">(编辑)</span>}
         </h1>
         <button
           onClick={openManage}
@@ -242,7 +349,6 @@ export default function WorkoutPage() {
         </button>
       </div>
 
-      {/* 动作列表 */}
       <div className="flex flex-col gap-3 w-full max-w-sm mx-auto">
         {exercises.map((exercise) => {
           const isExpanded = expanded.has(exercise.id);
@@ -250,7 +356,6 @@ export default function WorkoutPage() {
 
           return (
             <Card key={exercise.id} className="p-4">
-              {/* 动作标题 */}
               <button
                 onClick={() => toggleExpand(exercise.id)}
                 className="flex items-center justify-between w-full text-left"
@@ -266,10 +371,8 @@ export default function WorkoutPage() {
                 </span>
               </button>
 
-              {/* 展开的组记录 */}
               {isExpanded && (
                 <div className="mt-4 space-y-3">
-                  {/* 表头 */}
                   <div className="flex gap-2 text-xs text-gray-400 font-medium">
                     <span className="w-5 shrink-0">组</span>
                     <span className="flex-1 min-w-0">重量 (kg)</span>
@@ -327,11 +430,10 @@ export default function WorkoutPage() {
         })}
       </div>
 
-      {/* 底部保存按钮 */}
       <div className="fixed bottom-0 left-0 right-0 p-4 safe-bottom bg-gradient-to-t from-brand-50 to-transparent">
         <div className="max-w-sm mx-auto">
           <Button onClick={handleSave} className="w-full py-3 text-[16px]">
-            保存训练记录
+            {editRecord ? "更新训练记录" : "保存训练记录"}
           </Button>
         </div>
       </div>

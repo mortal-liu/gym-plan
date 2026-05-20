@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { WorkoutRecord } from "../types";
-import { getWorkouts } from "../utils/storage";
+import { getWorkouts, deleteWorkout } from "../utils/storage";
 import { getExercises } from "../data/exercises";
 import Card from "../components/ui/Card";
 
@@ -34,11 +34,14 @@ export default function HistoryPage() {
     setExpandedId((prev) => (prev === id ? null : id));
   }
 
-  function deleteWorkout(id: string) {
-    const updated = workouts.filter((w) => w.id !== id);
-    localStorage.setItem("gym-plan-workouts", JSON.stringify(updated));
-    setWorkouts(updated);
+  function handleDelete(id: string) {
+    deleteWorkout(id);
+    setWorkouts(getWorkouts());
     if (expandedId === id) setExpandedId(null);
+  }
+
+  function handleEdit(record: WorkoutRecord) {
+    navigate(`/workout/${record.dayType}`, { state: { record } });
   }
 
   const filtered = filter === "all"
@@ -151,12 +154,20 @@ export default function HistoryPage() {
                     </div>
                   </div>
                 ))}
-                <button
-                  onClick={() => deleteWorkout(workout.id)}
-                  className="text-red-400 text-xs font-medium hover:text-red-500 transition-colors"
-                >
-                  删除此记录
-                </button>
+                <div className="flex gap-4 mt-1">
+                  <button
+                    onClick={() => handleEdit(workout)}
+                    className="text-brand-500 text-xs font-medium hover:text-brand-600 transition-colors"
+                  >
+                    编辑
+                  </button>
+                  <button
+                    onClick={() => handleDelete(workout.id)}
+                    className="text-red-400 text-xs font-medium hover:text-red-500 transition-colors"
+                  >
+                    删除
+                  </button>
+                </div>
               </div>
             )}
           </Card>
