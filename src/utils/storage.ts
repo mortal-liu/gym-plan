@@ -96,6 +96,21 @@ export function toggleRestDay(date: string): void {
   localStorage.setItem(REST_DAYS_KEY, JSON.stringify(days));
 }
 
+/* 有氧追加到当天第一条记录 */
+
+export function appendToTodayWorkout(exerciseId: string, duration: number): void {
+  const today = new Date().toISOString().slice(0, 10);
+  const workouts = getAll();
+  const todayWorkout = workouts.find((w) => w.date === today);
+  if (todayWorkout) {
+    todayWorkout.exercises.push({
+      exerciseId,
+      sets: [{ duration }],
+    });
+    saveAll(workouts);
+  }
+}
+
 /* 训练草稿管理 */
 
 export function saveDraft(dayType: string, data: Record<string, SetRecord[]>): void {
