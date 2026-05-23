@@ -1,4 +1,5 @@
 {
+  "id": "/gym-plan/",
   "name": "Gym Plan - 健身记录",
   "short_name": "Gym Plan",
   "description": "健身训练记录、TDEE 计算、饮食参考，纯本地存储",
@@ -8,11 +9,18 @@
   "orientation": "portrait",
   "background_color": "#f0f7f4",
   "theme_color": "#f0f7f4",
+  "categories": ["health", "fitness", "lifestyle"],
   "icons": [
     {
-      "src": "/gym-plan/favicon.svg",
+      "src": "/gym-plan/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/gym-plan/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
