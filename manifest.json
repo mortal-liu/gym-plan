@@ -1,7 +1,7 @@
 {
   "name": "Gym Plan - 健身记录",
   "short_name": "Gym Plan",
-  "description": "记录推/拉/蹲三类训练的组数、次数和重量",
+  "description": "健身训练记录、TDEE 计算、饮食参考，纯本地存储",
   "start_url": "/gym-plan/",
   "scope": "/gym-plan/",
   "display": "standalone",
